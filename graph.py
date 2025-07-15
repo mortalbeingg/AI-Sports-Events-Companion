@@ -73,9 +73,34 @@ class State(TypedDict):
     budget_if_paid: Optional[float] = None
     
 def sports_events_agent_graph():
+    "Building and returning the graph"
     graph = StateGraph(State)
     
-    graph.add_node()
+    graph.add_node("get_userinfo_agent", get_userinfo_agent())
+    graph.add_node("get_chat_message", get_chat_message())
+    graph.add_node("get_venue_agent", get_venue_agent())
+    graph.add_node("get_transport_agent", get_transport_agent())
+    graph.add_node("get_stay_agent", get_stay_agent())
+    graph.add_node("get_unified_event_agent", get_unified_event_agent())
+    graph.add_node("get_final_agent", get_final_agent())
+    
+    # edges
+    graph.add_edge(START, "get_userinfo_agent")
+    
+    graph.add_conditional_edges("get_userinfo_agent", route_to_one)
+    
+    graph.add_edge("get_chat_message", "get_userinfo_agent")
+    graph.add_conditional_edges("get_venue_agent",route_to_all, ["get_transport_agent", "get_stay_agent"])
+    graph.add_conditional_edges("get_unified_event_agent",route_to_all, ["get_transport_agent", "get_stay_agent"])
+    graph.add_edge("get_transport_agent", "get_final_agent")
+    graph.add_edge("get_stay_agent", "get_final_agent")
+   
+    graph.add_edge(get_final_agent(), END)
+    
+    memory = MemorySaver()
+    return graph.compile(checkpoint=memory)
+
+sports_event_agent_graph = sports_events_agent_graph()
     
 
     
