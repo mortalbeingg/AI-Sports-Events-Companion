@@ -18,6 +18,9 @@ from agents.stay_agent import get_stay_agent, StayPreferences
 from agents.unified_event_agent import get_unified_event_agent, AllEventPreferences
 from agents.final_agent import get_final_agent
 
+from pydantic_ai.message import ModelMessage, ModelMessagesTypeAdapter
+
+
 class State(TypedDict):
     # User details/info and chat messages
     user_input: str
@@ -72,11 +75,55 @@ class State(TypedDict):
     is_paid: Literal["free", "paid", "any"]
     budget_if_paid: Optional[float] = None
     
+    
+async def collect_user_info(state: State, writer) -> Dict[str, Any]:
+    # Get the user information
+    user_input = state["user_input"]
+
+    # Get the message history into the format for Pydantic AI
+    message_history: list[ModelMessage] = []
+    for message_row in state['messages']:
+        message_history.extend(ModelMessagesTypeAdapter.validate_json(message_row))    
+    
+    # Call the info gathering agent
+    # result = await info_gathering_agent.run(user_input)
+    async with get_userinfo_agent.run_stream(user_input, message_history=message_history) as result:
+        curr_response = ""
+        async for message, last in result.stream_structured(debounce_by=0.01):  
+            try:
+                if last and not user_details.response:
+                    raise Exception("Incorrect travel details returned by the agent.")
+                user_details = await result.validate_structured_result(  
+                    message,
+                    allow_partial=not last
+                )
+            except ValidationError as e:
+                continue
+
+            if user_details.response:
+                writer(user_details.response[len(curr_response):])
+                curr_response = user_details.response  
+
+    # Return the response asking for more details if necessary
+    data = await result.get_data()
+    return {
+        "user_details": data.model_dump(),
+        "messages": [result.new_messages_json()]
+    }    
+    
+def get_chat_message(state: TravelState):
+    value = interrupt({})
+
+    # Set the user's latest message for the LLM to continue the conversation
+    return {
+        "user_input": value
+    }  
+
 def sports_events_agent_graph():
     "Building and returning the graph"
     graph = StateGraph(State)
     
-    graph.add_node("get_userinfo_agent", get_userinfo_agent())
+    graph.add_node("collect_user_info", collect_user_info())
     graph.add_node("get_chat_message", get_chat_message())
     graph.add_node("get_venue_agent", get_venue_agent())
     graph.add_node("get_transport_agent", get_transport_agent())
