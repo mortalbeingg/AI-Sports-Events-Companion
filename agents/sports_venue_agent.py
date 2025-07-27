@@ -14,6 +14,7 @@ class VenuePreferences:
     preferred_games: List[str]
     preferred_timeslot: str
     gym_availability: bool
+    location_scope: Literal["nearby", "citywide", "any"]
     
 
 system_prompt = f"""
@@ -36,4 +37,4 @@ async def get_venue_agent():
     client = mcp_client.MCPClient()
     client.load_servers(str(CONFIG_FILE))
     tools = await client.start()
-    return client, Agent(model=get_openai_model(), system_prompt=system_prompt, deps_type=UserPreferences, tools=tools)   
+    return client, Agent(model=get_openai_model(), system_prompt=system_prompt, deps_type=VenuePreferences, tools=tools)   

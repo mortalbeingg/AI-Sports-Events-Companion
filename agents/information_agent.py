@@ -13,13 +13,13 @@ model = get_openai_model()
 
 class UserInfo(BaseModel):
     intent: str = Field(description="The user's booking intent. Must be one of: 'book_game', 'book_event', or 'book_fitness'.")
-    # for 'book_game'
+    # for 'book_game_venue' or 'book_game_event'
     game_name: str = Field(description="Name of the sport or game the user wants to book a venue for (e.g., football, badminton).")
 
-    # For 'book_event'
+    # For 'book_tech_event' or 'book_general_event'
     event_name: str = Field(description="Topic or keyword for the event the user wants to attend (e.g., data science, AI conference).")
 
-    # For 'book_fitness'
+    # For 'book_fitness_event'
     fitness_type: str = Field(description="Type of fitness class or session (e.g., yoga, pilates, gym workout).")
 
     location: str = Field(description="City or location where the booking is intended.")
@@ -69,6 +69,7 @@ Collect the following fields depending on intent:
     - location
     - user_date_first (date of the event)
 
+
 If the user provides a date range (e.g., "between June 10 and June 12"):
 - Set user_date_first to start date
 - Set user_date_last to end date
@@ -78,12 +79,14 @@ If only one date is mentioned, set user_date_first and leave user_date_last as n
 Only set 'all_details_given' to true if:
 - intent is clearly identified AND
 - all required fields for that intent are present.
+
+Return the extracted details along with the classified intent.
 """
 
 
 get_userinfo_agent = Agent(
     model,
-    output_type=user_info_output,
+    output_type=UserInfo,
     system_prompt=system_prompt,
     retries=2
 )

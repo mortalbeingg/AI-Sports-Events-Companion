@@ -12,7 +12,7 @@ model = get_openai_model()
 
 @dataclass
 class GameEventPreferences:
-    event_format: Literal["online", "offline", "hybrid"]
+    format: Literal["online", "offline", "hybrid"]
     event_type: Literal["team", "solo", "any"]
     location_scope: Literal["same_city", "inter_city", "any"]
     competitive_level: Literal["casual", "competitive", "any"]
@@ -22,7 +22,7 @@ class GameEventPreferences:
 @dataclass
 class FitnessEventPreferences:
     fitness_type: Literal["yoga", "gym", "zumba", "pilates", "any"]
-    session_format: Literal["in_person", "online", "hybrid"]
+    format: Literal["offline", "online", "hybrid"]
     location_scope: Literal["nearby", "citywide", "any"]
     is_paid: Literal["free", "paid", "any"]
     budget_if_paid: Optional[float] = None
@@ -31,7 +31,7 @@ class FitnessEventPreferences:
 class TechEventPreferences:
     topic: str  # e.g., "machine learning"
     format: Literal["online", "offline", "hybrid"]
-    scope: Literal["same_city", "inter_city", "any"]
+    location_scope: Literal["same_city", "inter_city", "any"]
     is_paid: Literal["free", "paid", "any"]
     budget_if_paid: Optional[float] = None
 
@@ -64,7 +64,7 @@ Supported intents:
 Use the right preferences based on intent:
 
 1. For 'book_game_event':
-    - event_format: online/offline/hybrid
+    - format: online/offline/hybrid
     - event_type: team/solo
     - location_scope
     - competitive_level
@@ -72,14 +72,14 @@ Use the right preferences based on intent:
 
 2. For 'book_fitness_event':
     - fitness_type (e.g., yoga)
-    - session_format (e.g., in_person)
+    - format (e.g., in_person)
     - location_scope
     - is_paid, budget_if_paid
 
 3. For 'book_tech_event':
     - topic (e.g., AI, blockchain)
     - format
-    - scope
+    - location_scope
     - is_paid, budget_if_paid
 
 4. For 'book_general_event':
